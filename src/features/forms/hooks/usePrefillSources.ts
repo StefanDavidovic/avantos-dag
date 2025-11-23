@@ -3,53 +3,48 @@ import {
   getDirectDependencies,
   getTransitiveDependencies,
 } from "../utils/graph";
-import type { PrefillSourceGroup } from "../types/forms.types";
+import type {
+  PrefillSourceGroup,
+  PrefillSourceProvider,
+} from "../types/forms.types";
 import { useFormsGraph } from "./useFormGraph";
+import { defaultPrefillSourceProviders } from "../utils/prefillSourceProviders";
 
-export function usePrefillSources(nodeId: string | undefined) {
+export function usePrefillSources(
+  nodeId: string | undefined,
+  providers: PrefillSourceProvider[] = defaultPrefillSourceProviders
+) {
   const { data, isLoading, error } = useFormsGraph();
 
   const sources = useMemo<PrefillSourceGroup[] | undefined>(() => {
     if (!data || !nodeId) return;
 
     const { nodes, forms } = data;
+    const activeNode = nodes.find((n) => n.id === nodeId);
+    if (!activeNode) return [];
 
-    const direct = getDirectDependencies(nodeId, nodes);
-    const transitive = getTransitiveDependencies(nodeId, nodes);
+    const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+    const formsById = new Map(forms.map((form) => [form.id, form]));
 
-    const formsById = new Map(forms.map((f) => [f.id, f]));
+    const directDependencyIds = getDirectDependencies(nodeId, nodes);
+    const allTransitive = getTransitiveDependencies(nodeId, nodes);
+    const transitiveDependencyIds = allTransitive.filter(
+      (upstreamId) => !directDependencyIds.includes(upstreamId)
+    );
 
-    const mapToFormFields = (formIds: string[]) =>
-      formIds
-        .map((formId) => formsById.get(formId))
-        .filter(Boolean)
-        .map((form) => ({
-          formId: form!.id,
-          formName: form!.id,
-          fields: Object.keys(form!.field_schema.properties),
-        }));
+    const context = {
+      activeNode,
+      nodes,
+      nodeMap,
+      formsById,
+      directDependencyIds,
+      transitiveDependencyIds,
+    };
 
-    return [
-      {
-        label: "Direct Dependencies",
-        type: "direct",
-        forms: mapToFormFields(direct),
-      },
-      {
-        label: "Transitive Dependencies",
-        type: "transitive",
-        forms: mapToFormFields(transitive),
-      },
-      {
-        label: "Global Data",
-        type: "global",
-        globals: [
-          { key: "client.name", label: "Client Name" },
-          { key: "client.email", label: "Client Email" },
-        ],
-      },
-    ];
-  }, [data, nodeId]);
+    return providers
+      .map((provider) => provider.resolve(context))
+      .filter((group): group is PrefillSourceGroup => Boolean(group));
+  }, [data, nodeId, providers]);
 
   return {
     sources,

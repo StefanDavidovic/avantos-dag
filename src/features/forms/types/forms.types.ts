@@ -41,16 +41,33 @@ export interface PrefillMapping {
   field?: string;
 }
 
-export interface PrefillSourceGroup {
+export interface PrefillSourceOption {
+  id: string;
   label: string;
-  type: "direct" | "transitive" | "global";
-  forms?: {
-    formId: string;
-    formName: string;
-    fields: string[];
-  }[];
-  globals?: {
-    key: string;
-    label: string;
-  }[];
+  helperText?: string;
+  badge?: string;
+  mapping: PrefillMapping;
+}
+
+export interface PrefillSourceGroup {
+  id: string;
+  label: string;
+  items: PrefillSourceOption[];
+}
+
+export interface PrefillSourceProviderContext {
+  activeNode: Node;
+  nodes: Node[];
+  nodeMap: Map<string, Node>;
+  formsById: Map<string, FormSchema>;
+  directDependencyIds: string[];
+  transitiveDependencyIds: string[];
+}
+
+export interface PrefillSourceProvider {
+  id: string;
+  label: string;
+  resolve(
+    context: PrefillSourceProviderContext
+  ): PrefillSourceGroup | null | undefined;
 }
