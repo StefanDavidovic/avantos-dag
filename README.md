@@ -1,13 +1,5 @@
 # Avantos Prefill Challenge
 
-This repo hosts a React + TypeScript + Vite solution that:
-
-- pulls the blueprint DAG from the mock API
-- renders a node graph of forms
-- allows configuring prefill mappings with pluggable data-source providers
-- persists local overrides so changes survive reloads
-- ships with Vitest + React Testing Library coverage for the key flows
-
 ## Prerequisites
 
 - **Node 18+** (recommended). The mock environment currently uses Node 14, but Vitest requires at least Node 18.
