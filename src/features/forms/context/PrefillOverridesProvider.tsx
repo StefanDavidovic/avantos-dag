@@ -5,7 +5,7 @@ import {
   type PrefillOverridesState,
 } from "./PrefillOverridesContext";
 
-const STORAGE_KEY = "avantos:prefillOverrides";
+export const PREFILL_OVERRIDES_STORAGE_KEY = "avantos:prefillOverrides";
 
 type Action = {
   type: "set";
@@ -31,7 +31,8 @@ function reducer(
           : { ...node, [field]: mapping };
 
       if (Object.keys(updatedNode).length === 0) {
-        const { [nodeId]: _, ...rest } = state;
+        const rest = { ...state };
+        delete rest[nodeId];
         return rest;
       }
 
@@ -57,7 +58,7 @@ export function PrefillOverridesProvider({
     (): PrefillOverridesState => {
       if (typeof window === "undefined") return {};
       try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
+        const raw = window.localStorage.getItem(PREFILL_OVERRIDES_STORAGE_KEY);
         if (!raw) return {};
         const parsed = JSON.parse(raw) as PrefillOverridesState;
         return parsed ?? {};
@@ -72,12 +73,15 @@ export function PrefillOverridesProvider({
     try {
       const hasOverrides = Object.keys(state).length > 0;
       if (!hasOverrides) {
-        window.localStorage.removeItem(STORAGE_KEY);
+        window.localStorage.removeItem(PREFILL_OVERRIDES_STORAGE_KEY);
         return;
       }
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(
+        PREFILL_OVERRIDES_STORAGE_KEY,
+        JSON.stringify(state)
+      );
     } catch {
-      throw Error("Provider error");
+      // ignore storage failures
     }
   }, [state]);
 
