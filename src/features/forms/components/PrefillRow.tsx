@@ -111,11 +111,12 @@ export function PrefillRow({
                 event.stopPropagation();
                 handleClear();
               }}
-              className="text-slate-400 hover:text-red-500 transition"
+              style={{ fontSize: "1.3rem", fontWeight: 600 }}
+              className="font-bold text-slate-400 hover:text-red-500 transition"
               aria-label={`Clear prefill for ${fieldName}`}
               disabled={update.isPending}
             >
-              ×
+              x
             </button>
           )}
         </div>

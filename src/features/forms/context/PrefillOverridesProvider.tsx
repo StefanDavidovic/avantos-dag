@@ -1,9 +1,11 @@
-import { useMemo, useReducer, type ReactNode } from "react";
+import { useEffect, useMemo, useReducer, type ReactNode } from "react";
 import type { PrefillMapping } from "../types/forms.types";
 import {
   PrefillOverridesContext,
   type PrefillOverridesState,
 } from "./PrefillOverridesContext";
+
+const STORAGE_KEY = "avantos:prefillOverrides";
 
 type Action = {
   type: "set";
@@ -49,7 +51,35 @@ export function PrefillOverridesProvider({
 }: {
   children: ReactNode;
 }) {
-  const [state, dispatch] = useReducer(reducer, {});
+  const [state, dispatch] = useReducer(
+    reducer,
+    {},
+    (): PrefillOverridesState => {
+      if (typeof window === "undefined") return {};
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw) as PrefillOverridesState;
+        return parsed ?? {};
+      } catch {
+        return {};
+      }
+    }
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const hasOverrides = Object.keys(state).length > 0;
+      if (!hasOverrides) {
+        window.localStorage.removeItem(STORAGE_KEY);
+        return;
+      }
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      throw Error("Provider error");
+    }
+  }, [state]);
 
   const value = useMemo(() => {
     const applyOverrides = (
